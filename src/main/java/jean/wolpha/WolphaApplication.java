@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class WolphaApplication {
 
 	public static void main(String[] args) {
+		System.out.println("Hello world!");
 		SpringApplication.run(WolphaApplication.class, args);
 	}
 
