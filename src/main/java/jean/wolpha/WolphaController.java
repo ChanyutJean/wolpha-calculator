@@ -1,5 +1,6 @@
 package jean.wolpha;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,6 +10,8 @@ import java.math.BigDecimal;
 
 @RestController
 public class WolphaController {
+    @Autowired
+    private WolphaService serv;
 
     @GetMapping("/")
     public String home() {
@@ -16,8 +19,8 @@ public class WolphaController {
     }
 
     @PostMapping("/")
-    public BigDecimal calculate(@RequestBody String expr) {
-        return BigDecimal.ZERO;
+    public String calculate(@RequestBody String expr) {
+        return serv.calculate(expr).toPlainString();
     }
 
 }
