@@ -1,12 +1,11 @@
 package jean.wolpha;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.sql.Date;
+import javax.validation.constraints.NotNull;
+import java.sql.Timestamp;
 
 @Entity
 @Table(name = "entity", schema = "wolpha")
@@ -16,6 +15,10 @@ public class WolphaEntity {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
     private Integer id;
-    private Date at;
+    @NotNull
+    private Timestamp at;
+    @NotNull
     private String record;
+    @NotNull
+    private String result;
 }

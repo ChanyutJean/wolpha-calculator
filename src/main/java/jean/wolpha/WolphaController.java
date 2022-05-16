@@ -18,7 +18,7 @@ public class WolphaController {
 
     @PostMapping("/")
     public String api(@RequestBody String expr) {
-        return serv.process(expr).toPlainString();
+        return serv.process(expr);
     }
 
 }
