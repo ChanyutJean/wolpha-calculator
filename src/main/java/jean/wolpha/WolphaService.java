@@ -10,8 +10,8 @@ public class WolphaService {
     @Autowired
     private WolphaRepository repo;
 
-    public BigDecimal calculate(String expr) {
+    public BigDecimal process(String expr) {
         repo.addEntity(expr, new java.sql.Date(System.currentTimeMillis()));
-        return BigDecimal.ZERO;
+        return WolphaCalculator.calculate(expr);
     }
 }

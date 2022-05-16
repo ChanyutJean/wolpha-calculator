@@ -6,8 +6,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
-
 @RestController
 public class WolphaController {
     @Autowired
@@ -19,8 +17,8 @@ public class WolphaController {
     }
 
     @PostMapping("/")
-    public String calculate(@RequestBody String expr) {
-        return serv.calculate(expr).toPlainString();
+    public String api(@RequestBody String expr) {
+        return serv.process(expr).toPlainString();
     }
 
 }

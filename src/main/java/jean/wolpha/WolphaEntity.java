@@ -16,7 +16,6 @@ public class WolphaEntity {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
     private Integer id;
-
     private Date at;
     private String record;
 }
