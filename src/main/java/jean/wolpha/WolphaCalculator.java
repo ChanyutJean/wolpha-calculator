@@ -8,6 +8,7 @@ import javax.swing.tree.TreeNode;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.*;
@@ -16,12 +17,10 @@ import java.util.stream.IntStream;
 
 public class WolphaCalculator {
     private static final MathContext U = MathContext.UNLIMITED;
-
-    private BigDecimal current;
-    private CharacterIterator itr;
+    private long parenthesisStack;
+    private final CharacterIterator itr;
 
     public WolphaCalculator(CharacterIterator itr) {
-        this.current = BigDecimal.ZERO;
         this.itr = itr;
     }
 
@@ -30,32 +29,120 @@ public class WolphaCalculator {
     }
 
     private BigDecimal readValue() throws Exception {
-        if (!WolphaSymbol.VALID_CHAR.contains(itr.current())) {
-            throw new Exception(String.valueOf(itr.getIndex()));
-        }
-        if (WolphaSymbol.DIGITS.contains(itr.current())) {
-            current = readNumber();
-        }
+        if (WolphaSymbol.DIGITS.contains(itr.current())
+                || WolphaSymbol.DECIMAL_POINT.contains(itr.current())) {
+            return applyOperator(readNumber(), readOperator(), readValue());
 
+        } else if (WolphaSymbol.CONSTANT_STARTERS.contains(itr.current())) {
+            return applyOperator(readConstant(), readOperator(), readValue());
 
-        return BigDecimal.ZERO;
+        } else if (WolphaSymbol.FUNCTION_STARTERS.contains(itr.current())) {
+            String funcName = readFunction();
+            throw new ArithmeticException(String.valueOf(itr.getIndex()));
+//            if (!WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
+//                throw new ArithmeticException(String.valueOf(itr.getIndex()));
+//            }
+//            parenthesisStack += 1;
+//
+//            BigDecimal operand;
+//            try {
+//                operand = readValue();
+//            } catch (WolphaParenthesisException e) {
+//                itr.next();
+//            }
+//
+//
+//
+//            BigDecimal operand;
+//            if (WolphaSymbol.DIGITS.contains(itr.current())
+//                    || WolphaSymbol.DECIMAL_POINT.contains(itr.current())) {
+//                operand = readNumber();
+//            } else if (WolphaSymbol.CONSTANT_STARTERS.contains(itr.current())) {
+//                operand = readConstant();
+//            } else {
+//                throw new ArithmeticException(String.valueOf(itr.getIndex()));
+//            }
+//
+//            return
+
+        }  else if (WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
+            parenthesisStack += 1;
+            return readValue();
+
+        } else if (WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
+            if (parenthesisStack == 0) {
+                throw new WolphaParenthesisException(String.valueOf(itr.getIndex()));
+            }
+            parenthesisStack -= 1;
+            return readValue();
+
+        } else if (WolphaSymbol.OPERATORS.contains(itr.current())
+                || WolphaSymbol.NON_STARTER_CHARACTERS.contains(itr.current())
+                || WolphaSymbol.EQUALS.contains(itr.current())
+                || !WolphaSymbol.VALID_CHAR.contains(itr.current())) {
+            throw new ArithmeticException(String.valueOf(itr.getIndex()));
+        } else {
+            // unreachable
+            throw new ArithmeticException(String.valueOf(itr.getIndex()));
+        }
     }
 
-    private String readFunction() throws Exception {
+    private BigDecimal applyOperator(BigDecimal left, char operation, BigDecimal right) {
+        switch (operation) {
+            case '+':
+                return left.add(right);
+            case '-':
+                return left.subtract(right);
+            case '*':
+            case 'x':
+                return left.multiply(right);
+            case '/':
+                return left.divide(right, RoundingMode.HALF_UP);
+            case '^':
+                return BigDecimalMath.pow(left, right, U);
+        }
+        // unreachable
+        throw new ArithmeticException(String.valueOf(itr.getIndex()));
+    }
+
+    private BigDecimal applyFunction(String funcName, BigDecimal operand) {
+        switch (funcName) {
+            case "sin":
+                return BigDecimalMath.sin(operand, U);
+            case "cos":
+                return BigDecimalMath.cos(operand, U);
+            case "tan":
+                return BigDecimalMath.tan(operand, U);
+            case "sqrt":
+                return BigDecimalMath.sqrt(operand, U);
+            case "ln":
+                return BigDecimalMath.log(operand, U);
+        }
+        // unreachable
+        throw new ArithmeticException(String.valueOf(itr.getIndex()));
+    }
+
+    private Character readOperator() {
+        if (WolphaSymbol.OPERATORS.contains(itr.current())) {
+            itr.next();
+            return itr.current();
+        }
+        throw new ArithmeticException(String.valueOf(itr.getIndex()));
+    }
+
+    private String readFunction() {
         List<String> candidates = WolphaSymbol.FUNCTIONS;
         String funcName = isNext(itr, candidates);
-        IntStream.range(0, funcName.length()).forEach(i -> {
-            itr.next();
-        });
+        IntStream.range(0, funcName.length()).forEach(i -> itr.next());
         return funcName;
     }
 
-    private String isNext(CharacterIterator itr, List<String> candidates) throws Exception {
+    private String isNext(CharacterIterator itr, List<String> candidates) {
         DefaultMutableTreeNode node = createCandidateTree(candidates);
         return isNext(itr, node, "");
     }
 
-    private String isNext(CharacterIterator itr, DefaultMutableTreeNode node, String prefix) throws Exception {
+    private String isNext(CharacterIterator itr, DefaultMutableTreeNode node, String prefix) {
         List<DefaultMutableTreeNode> children = Collections.list(node.children()).stream()
                 .map(child -> (DefaultMutableTreeNode) child)
                 .collect(Collectors.toList());
@@ -68,7 +155,7 @@ public class WolphaCalculator {
                 return isNext(itr, child, prefix + child.getUserObject());
             }
         }
-        throw new Exception(String.valueOf(itr.getIndex()));
+        throw new ArithmeticException(String.valueOf(itr.getIndex()));
     }
 
     private DefaultMutableTreeNode createCandidateTree(List<String> candidates) {
@@ -101,7 +188,7 @@ public class WolphaCalculator {
         return root;
     }
 
-    private BigDecimal readConstant() throws Exception {
+    private BigDecimal readConstant() {
         if (itr.current() == 'e') {
             itr.next();
             return BigDecimalMath.e(U);
@@ -112,25 +199,26 @@ public class WolphaCalculator {
                 itr.next();
                 return BigDecimalMath.pi(U);
             } else {
-                throw new Exception(String.valueOf(itr.getIndex()));
+                throw new ArithmeticException(String.valueOf(itr.getIndex()));
             }
         }
-        throw new Exception(String.valueOf(itr.getIndex()));
+        throw new ArithmeticException(String.valueOf(itr.getIndex()));
     }
 
-    private BigDecimal readNumber() throws Exception {
+    private BigDecimal readNumber() {
         return readNumber(true, "");
     }
 
-    private BigDecimal readNumber(boolean start, String prefix) throws Exception {
-        if (WolphaSymbol.DIGITS.contains(itr.current())) {
+    private BigDecimal readNumber(boolean start, String prefix) {
+        if (WolphaSymbol.DIGITS.contains(itr.current())
+                || (itr.current() == '.')) {
             char current = itr.current();
             if (start && current == '0') {
-                throw new Exception(String.valueOf(itr.getIndex()));
+                throw new ArithmeticException(String.valueOf(itr.getIndex()));
             }
             itr.next();
             readNumber(false, prefix + current);
         }
-        return BigDecimal.valueOf(Long.parseLong(prefix));
+        return BigDecimal.valueOf(Double.parseDouble(prefix));
     }
 }

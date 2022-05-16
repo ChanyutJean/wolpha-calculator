@@ -125,14 +125,6 @@ public class WolphaTests {
 //    }
 //
 //    @Test
-//    public void log() {
-//        assertEquals(BigDecimal.valueOf(2), WolphaCalculator.calculate("log_10(100)"));
-//        assertEquals(BigDecimal.valueOf(2), WolphaCalculator.calculate("log_3(log_2(512))"));
-//        assertEquals(BigDecimalMath.log(BigDecimalMath.pi(U), U),
-//                WolphaCalculator.calculate("log_4(pi)/log_4(e)"));
-//    }
-//
-//    @Test
 //    public void sin() {
 //        assertEquals(BigDecimal.ZERO, WolphaCalculator.calculate("sin(pi)"));
 //        assertEquals(BigDecimal.ONE, WolphaCalculator.calculate("sin(pi/2)"));
