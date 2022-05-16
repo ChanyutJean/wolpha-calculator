@@ -53,10 +53,17 @@ public class WolphaTests {
     }
 
     @Test
+    public void decimal() {
+        assertEquals(BigDecimal.ONE, WolphaCalculator.calculate(".1/.1"));
+        assertEquals(BigDecimal.ONE, WolphaCalculator.calculate("0.1/0.1"));
+        assertEquals(BigDecimal.ONE, WolphaCalculator.calculate(".1/0.1"));
+    }
+
+    @Test
     public void parenthesis() {
         assertEquals(BigDecimal.TEN, WolphaCalculator.calculate("2*(2+3)"));
         assertEquals(BigDecimal.TEN, WolphaCalculator.calculate("(10/5)/(4/20)"));
-        assertEquals(BigDecimal.TEN, WolphaCalculator.calculate("(2*(2+2))+2"));
+        assertEquals(BigDecimal.TEN, WolphaCalculator.calculate("(2x(2+2))+2"));
         assertEquals(BigDecimal.ONE, WolphaCalculator.calculate("(((1)))"));
         assertEquals(BigDecimal.ONE, WolphaCalculator.calculate("((1+(1))-1)"));
     }
