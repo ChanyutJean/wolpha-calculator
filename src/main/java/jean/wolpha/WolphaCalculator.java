@@ -11,6 +11,7 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class WolphaCalculator {
     private static final MathContext U = MathContext.UNLIMITED;
@@ -39,70 +40,69 @@ public class WolphaCalculator {
     }
 
     private String readFunction(CharacterIterator itr) throws Exception {
-        if (itr.current() == 's') {
+        List<String> candidates = WolphaSymbol.FUNCTIONS;
+        String funcName = isNext(itr, candidates);
+        IntStream.range(0, funcName.length()).forEach(i -> {
             itr.next();
-            if (itr.current() == 'i') {
-                if (assertNext('n')) {
-                    return "sin";
-                }
-            }
-            if (itr.current() == 'q') {
-                if (assertNext('r') && assertNext('t')) {
-                    return "sqrt";
-                }
-            }
-            throw new Exception(String.valueOf(itr.getIndex()))
-        }
-        if (itr.current() == 'c') {
-
-        }
+        });
     }
 
-    private boolean assertNext(char c) throws Exception {
-        if (itr.current() == c) {
-            itr.next();
-            return true;
-        }
-        throw new Exception(String.valueOf(itr.getIndex()));
-    }
+//    private boolean assertNext(char c) throws Exception {
+//        if (itr.current() == c) {
+//            itr.next();
+//            return true;
+//        }
+//        throw new Exception(String.valueOf(itr.getIndex()));
+//    }
 
     private String isNext(CharacterIterator itr, List<String> candidates) {
+        DefaultMutableTreeNode node = createCandidateTree(candidates);
+        return isNext(itr, node, "");
+    }
 
+    private String isNext(CharacterIterator itr, DefaultMutableTreeNode node, String prefix) {
+        List<DefaultMutableTreeNode> children = Collections.list(node.children()).stream()
+                .map(child -> (DefaultMutableTreeNode) child)
+                .collect(Collectors.toList());
+        if (children.size() == 0) {
+            return prefix;
+        }
+        for (DefaultMutableTreeNode child : children) {
+            if ((char) child.getUserObject() == itr.current()) {
+                itr.next();
+                return isNext(itr, child, prefix + child.getUserObject());
+            }
+        }
     }
 
     private DefaultMutableTreeNode createCandidateTree(List<String> candidates) {
         DefaultMutableTreeNode root = new DefaultMutableTreeNode();
 
         Map<Character, List<String>> map = new HashMap<>();
-        candidates.forEach(candidate -> {
-            if (map.containsKey(candidate.charAt(0))) {
-                map.put(candidate.charAt(0), new ArrayList<>());
-            }
-            map.get(candidate.charAt(0)).add(candidate);
-        });
+        candidates.stream()
+                .filter(candidate -> !candidate.equals(""))
+                .forEach(candidate -> {
+                    if (map.containsKey(candidate.charAt(0))) {
+                        map.put(candidate.charAt(0), new ArrayList<>());
+                    }
+                    if (candidate.length() == 1) {
+                        root.add(new DefaultMutableTreeNode(candidate.charAt(0)));
+                    } else {
+                        map.get(candidate.charAt(0)).add(candidate);
+                    }
+                });
 
         map.keySet().forEach(character -> {
             List<String> subCandidates = map.get(character);
-            root.add(createCandidateTree(subCandidates));
+            if (subCandidates.size() > 0) {
+                root.add(createCandidateTree(subCandidates.stream()
+                        .map(candidate -> candidate.substring(1))
+                        .collect(Collectors.toList())
+                ));
+            }
         });
 
-        return root
-
-
-//
-//        candidates.sort(Comparator.comparingInt(c -> c.charAt(0)));
-//
-//        Set<Character> firstChars = candidates.stream().map(c -> c.charAt(0)).collect(Collectors.toSet());
-//        for (Character ch : firstChars) {
-//            valid candidates.stream().filter(c -> c.charAt(0) == ch).map(c ->).collect(Collectors.toList());
-//
-//
-//
-//            children.add(new DefaultMutableTreeNode(ch));
-//        }
-//        for (DefaultMutableTreeNode child : children) {
-//            root.add(child);
-//        }
+        return root;
     }
 
     private static BigDecimal readConstant(CharacterIterator itr) throws Exception {
