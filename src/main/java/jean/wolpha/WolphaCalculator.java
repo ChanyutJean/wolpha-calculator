@@ -6,6 +6,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -28,39 +29,33 @@ public class WolphaCalculator {
         return BigDecimal.ZERO;
     }
 
-    private BigDecimal readValue(CharacterIterator itr) throws Exception {
+    private BigDecimal readValue() throws Exception {
         if (!WolphaSymbol.VALID_CHAR.contains(itr.current())) {
             throw new Exception(String.valueOf(itr.getIndex()));
         }
-        if (WolphaSymbol.CHARACTERS.contains(itr.current())) {
-            String fn = readFunction(itr);
-            //...
+        if (WolphaSymbol.DIGITS.contains(itr.current())) {
+            current = readNumber();
         }
+
+
         return BigDecimal.ZERO;
     }
 
-    private String readFunction(CharacterIterator itr) throws Exception {
+    private String readFunction() throws Exception {
         List<String> candidates = WolphaSymbol.FUNCTIONS;
         String funcName = isNext(itr, candidates);
         IntStream.range(0, funcName.length()).forEach(i -> {
             itr.next();
         });
+        return funcName;
     }
 
-//    private boolean assertNext(char c) throws Exception {
-//        if (itr.current() == c) {
-//            itr.next();
-//            return true;
-//        }
-//        throw new Exception(String.valueOf(itr.getIndex()));
-//    }
-
-    private String isNext(CharacterIterator itr, List<String> candidates) {
+    private String isNext(CharacterIterator itr, List<String> candidates) throws Exception {
         DefaultMutableTreeNode node = createCandidateTree(candidates);
         return isNext(itr, node, "");
     }
 
-    private String isNext(CharacterIterator itr, DefaultMutableTreeNode node, String prefix) {
+    private String isNext(CharacterIterator itr, DefaultMutableTreeNode node, String prefix) throws Exception {
         List<DefaultMutableTreeNode> children = Collections.list(node.children()).stream()
                 .map(child -> (DefaultMutableTreeNode) child)
                 .collect(Collectors.toList());
@@ -73,6 +68,7 @@ public class WolphaCalculator {
                 return isNext(itr, child, prefix + child.getUserObject());
             }
         }
+        throw new Exception(String.valueOf(itr.getIndex()));
     }
 
     private DefaultMutableTreeNode createCandidateTree(List<String> candidates) {
@@ -105,10 +101,7 @@ public class WolphaCalculator {
         return root;
     }
 
-    private static BigDecimal readConstant(CharacterIterator itr) throws Exception {
-        if (!WolphaSymbol.VALID_CHAR.contains(itr.current())) {
-            throw new Exception(String.valueOf(itr.getIndex()));
-        }
+    private BigDecimal readConstant() throws Exception {
         if (itr.current() == 'e') {
             itr.next();
             return BigDecimalMath.e(U);
@@ -122,9 +115,22 @@ public class WolphaCalculator {
                 throw new Exception(String.valueOf(itr.getIndex()));
             }
         }
+        throw new Exception(String.valueOf(itr.getIndex()));
     }
 
-    private static String readOperator(CharacterIterator itr) throws Exception {
+    private BigDecimal readNumber() throws Exception {
+        return readNumber(true, "");
+    }
 
+    private BigDecimal readNumber(boolean start, String prefix) throws Exception {
+        if (WolphaSymbol.DIGITS.contains(itr.current())) {
+            char current = itr.current();
+            if (start && current == '0') {
+                throw new Exception(String.valueOf(itr.getIndex()));
+            }
+            itr.next();
+            readNumber(false, prefix + current);
+        }
+        return BigDecimal.valueOf(Long.parseLong(prefix));
     }
 }
