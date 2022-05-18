@@ -27,50 +27,85 @@ public class WolphaCalculator {
     }
 
     public static BigDecimal calculate(String expr) {
-        return subCalculate(expr, F);
+        return calculateByOrderOfOperations(expr);
     }
 
-    private static BigDecimal subCalculate(String expr, int scale) {
+    private static BigDecimal calculateByOrderOfOperations(String expr) {
+        List<Integer> openIndices = getCharacterIndexes(expr, '(');
+        List<Integer> closeIndices = getCharacterIndexes(expr, ')');
+        Map<Integer, Boolean> parenthesisIndices = parseIndices(openIndices, closeIndices, expr.length());
+        Stack<List<Integer>> termRanges = getListOfTermRanges(parenthesisIndices);
+
+        while (!termRanges.isEmpty()) {
+            List<Integer> termRange = termRanges.pop();
+            String term = expr.substring(termRange.indexOf(0), termRange.indexOf(1));
+            String termWithOrderOfOperations = insertOperationOrderNonParenthesis(term);
+            expr = expr.substring(0, termRange.indexOf(0))
+                    + calculateLeftToRight(termWithOrderOfOperations, S)
+                    + expr.substring(termRange.indexOf(1));
+        }
+
+
+    }
+
+    private static BigDecimal calculateLeftToRight(String expr, int scale) {
         expr += "=";
         CharacterIterator itr = new StringCharacterIterator(expr);
         WolphaCalculator calc = new WolphaCalculator(itr);
         return calc.readValue().setScale(scale, H);
     }
 
-    private static String insertOperationOrder(String expr) {
-
+    private static List<Integer> getCharacterIndexes(String expr, char character) {
+        List<Integer> indices = new ArrayList<>();
+        int index = expr.indexOf(character);
+        while (index >= 0) {
+            indices.add(index);
+            index = expr.indexOf(character, index + 1);
+        }
+        return indices;
     }
 
+    // 1+(1+1) have indices of open at (-1, 2) and close at (6, 7),
+    // with pseudo initial opening parenthesis at -1 and pseudo terminal parenthesis at 7 and this
+    // returns ((-1, true), (2, true), (6, false), (7, false))
+    private static Map<Integer, Boolean> parseIndices(List<Integer> openIndices, List<Integer> closeIndices, int finalIndex) {
+        Map<Integer, Boolean> map = new TreeMap<>();
+        openIndices.forEach(index -> map.put(index, true));
+        closeIndices.forEach(index -> map.put(index, false));
+        map.put(-1, true);
+        map.put(finalIndex, false);
+        return map;
+    }
+
+
+    // 1+(1+1) have parentheses of ((-1, true), (2, true), (6, false), (7, false)) and this returns
+    // ((0, 6), (3, 5)) representing 1+(1+1) and 1+1
+    // (3, 5) representing inner parenthesis will be on top of the stack for evaluation
+    private static Stack<List<Integer>> getListOfTermRanges(Map<Integer, Boolean> parenthesisIndices) {
+        Stack<List<Integer>> finalTermRange = new Stack<>();
+        Stack<List<Integer>> termRangeStack = new Stack<>();
+
+        for (int entry : parenthesisIndices.keySet()) {
+            if (parenthesisIndices.get(entry)) { // opening parenthesis
+                List<Integer> termRange = new ArrayList<>();
+                termRange.add(entry + 1); // begin after opening parenthesis
+                termRangeStack.add(termRange);
+            } else { // closing parenthesis
+                List<Integer> termRange = termRangeStack.pop();
+                termRange.add(entry); // end at closing parenthesis
+                finalTermRange.add(termRange);
+            }
+        }
+
+        return finalTermRange;
+    }
+
+    // 1+1x1-1 becomes (1)+(1x1)-(1)
     private static String insertOperationOrderNonParenthesis(String expr) {
-//        List<Character> operators = extractOperators(expr);
         expr = expr.replaceAll("\\+", ")+(");
         expr = expr.replaceAll("-", ")-(");
         return "(" + expr + ")";
     }
-
-//    private static List<Character> extractOperators(String expr) {
-//        return Arrays.stream(expr.split(""))
-//                .map(character -> character.charAt(0))
-//                .filter(WolphaSymbol.OPERATORS::contains)
-//                .collect(Collectors.toList());
-//    }
-//
-//    private static int nextOperatorIndex(CharacterIterator itr) {
-//
-//    }
-//
-//
-//    private static DefaultMutableTreeNode createOperationTree(String expr) {
-//        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-//        CharacterIterator itr = new StringCharacterIterator(expr);
-//
-//        while (itr.getIndex() >= itr.getEndIndex()) {
-//            StringBuilder term = new StringBuilder();
-//            if (WolphaSymbol.OPERATORS.contains(itr.current())) {
-//
-//            }
-//        }
-//    }
 
     private BigDecimal readValue() {
         if (WolphaSymbol.DIGITS.contains(itr.current())
@@ -149,7 +184,7 @@ public class WolphaCalculator {
         }
         itr.next();
 
-        return WolphaCalculator.subCalculate(parenthesisValue.toString(), S);
+        return WolphaCalculator.calculateLeftToRight(parenthesisValue.toString(), S);
     }
 
     private BigDecimal applyOperator(BigDecimal left, char operation, BigDecimal right) {
