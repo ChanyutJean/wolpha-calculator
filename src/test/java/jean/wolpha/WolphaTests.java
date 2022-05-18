@@ -10,10 +10,12 @@ import java.math.RoundingMode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 public class WolphaTests {
     private static final MathContext D = MathContext.DECIMAL128;
-    private static final RoundingMode H = RoundingMode.HALF_UP;
+    private static final RoundingMode H = RoundingMode.HALF_EVEN;
+    private static final int F = 10;
+
 
     private static BigDecimal round(BigDecimal value) {
-        return value.setScale(10, H);
+        return value.setScale(F, H);
     }
 
     @Test
@@ -87,14 +89,7 @@ public class WolphaTests {
     public void sqrt() {
         assertEquals(round(BigDecimal.valueOf(4)), WolphaCalculator.calculate("sqrt(16)"));
         assertEquals(round(BigDecimal.valueOf(3)), WolphaCalculator.calculate("sqrt(sqrt(81))"));
-        assertEquals(round(BigDecimal.valueOf(2)), WolphaCalculator.calculate("sqrt(64)-sqrt(30+sqrt(36)"));
-    }
-
-    @Test
-    public void factorial() {
-        assertEquals(round(BigDecimal.valueOf(120)), WolphaCalculator.calculate("5!"));
-        assertEquals(round(BigDecimal.valueOf(20)), WolphaCalculator.calculate("5!/3!"));
-        assertEquals(round(BigDecimal.valueOf(48)), WolphaCalculator.calculate("3!*3!+4!/2"));
+        assertEquals(round(BigDecimal.valueOf(2)), WolphaCalculator.calculate("sqrt(64)-sqrt(30+sqrt(36))"));
     }
 
     @Test

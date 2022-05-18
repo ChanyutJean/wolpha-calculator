@@ -17,7 +17,9 @@ import java.util.stream.IntStream;
 
 public class WolphaCalculator {
     private static final MathContext D = MathContext.DECIMAL128;
-    private static final RoundingMode H = RoundingMode.HALF_UP;
+    private static final RoundingMode H = RoundingMode.HALF_EVEN;
+    private static final int S = 20; // Intermediate precision
+    private static final int F = 10; // Final precision
     private final CharacterIterator itr;
 
     public WolphaCalculator(CharacterIterator itr) {
@@ -25,10 +27,14 @@ public class WolphaCalculator {
     }
 
     public static BigDecimal calculate(String expr) {
+        return subCalculate(expr, F);
+    }
+
+    private static BigDecimal subCalculate(String expr, int scale) {
         expr += "=";
         CharacterIterator itr = new StringCharacterIterator(expr);
         WolphaCalculator calc = new WolphaCalculator(itr);
-        return calc.readValue().setScale(10, H);
+        return calc.readValue().setScale(scale, H);
     }
 
     private BigDecimal readValue() {
@@ -92,16 +98,28 @@ public class WolphaCalculator {
     private BigDecimal readParenthesisValue() {
         StringBuilder parenthesisValue = new StringBuilder();
         while (!WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
-            if (WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
+            if (WolphaSymbol.FUNCTION_STARTERS.contains(itr.current())) {
+
+                String funcName = readFunction();
+
+                itr.next();
+                BigDecimal operand = readParenthesisValue();
+                parenthesisValue.append(applyFunction(funcName, operand));
+
+            } else if (WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
+
                 itr.next();
                 parenthesisValue.append(readParenthesisValue());
+
+            } else {
+
+                parenthesisValue.append(itr.current());
+                itr.next();
             }
-            parenthesisValue.append(itr.current());
-            itr.next();
         }
         itr.next();
 
-        return WolphaCalculator.calculate(parenthesisValue.toString());
+        return WolphaCalculator.subCalculate(parenthesisValue.toString(), S);
     }
 
     private BigDecimal applyOperator(BigDecimal left, char operation, BigDecimal right) {
@@ -114,13 +132,17 @@ public class WolphaCalculator {
             case 'x':
                 return left.multiply(right);
             case '/':
-                return left.divide(right, H);
+                return left.divide(right, S, H);
             case '^':
-                return BigDecimalMath.pow(left, right, D);
+                return BigDecimalMath.pow(left, right, MathContext.DECIMAL128);
         }
         // unreachable
         throw new ArithmeticException(String.valueOf(itr.getIndex()));
     }
+
+//    private static BigDecimal pow(BigDecimal base, BigDecimal index) {
+//        BigDecimal power = index.multiply(BigDecimalMath.log(base, ));
+//    }
 
     private BigDecimal applyFunction(String funcName, BigDecimal operand) {
         switch (funcName) {
@@ -150,9 +172,7 @@ public class WolphaCalculator {
 
     private String readFunction() {
         List<String> candidates = WolphaSymbol.FUNCTIONS;
-        String funcName = isNext(itr, candidates);
-        IntStream.range(0, funcName.length()).forEach(i -> itr.next());
-        return funcName;
+        return isNext(itr, candidates);
     }
 
     private String isNext(CharacterIterator itr, List<String> candidates) {
