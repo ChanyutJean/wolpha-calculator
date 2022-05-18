@@ -33,19 +33,24 @@ public class WolphaCalculator {
     private static BigDecimal calculateByOrderOfOperations(String expr) {
         List<Integer> openIndices = getCharacterIndexes(expr, '(');
         List<Integer> closeIndices = getCharacterIndexes(expr, ')');
-        Map<Integer, Boolean> parenthesisIndices = parseIndices(openIndices, closeIndices, expr.length());
+        Map<Integer, Boolean> parenthesisIndices = parseIndices(openIndices, closeIndices);
         Stack<List<Integer>> termRanges = getListOfTermRanges(parenthesisIndices);
 
+        String newExpr = "";
         while (!termRanges.isEmpty()) {
-            List<Integer> termRange = termRanges.pop();
-            String term = expr.substring(termRange.indexOf(0), termRange.indexOf(1));
-            String termWithOrderOfOperations = insertOperationOrderNonParenthesis(term);
-            expr = expr.substring(0, termRange.indexOf(0))
-                    + calculateLeftToRight(termWithOrderOfOperations, S)
-                    + expr.substring(termRange.indexOf(1));
+            newExpr =
         }
 
+        return calculateLeftToRight(expr, F);
+    }
 
+    private static String evaluateTopMostParenthesis(String expr, Stack<List<Integer>> termRanges) {
+        List<Integer> termRange = termRanges.pop();
+        String term = expr.substring(termRange.get(0), termRange.get(1));
+        String termWithOrderOfOperations = insertOperationOrderNonParenthesis(term);
+        return expr.substring(0, termRange.get(0))
+                + calculateLeftToRight(termWithOrderOfOperations, S)
+                + expr.substring(termRange.get(1));
     }
 
     private static BigDecimal calculateLeftToRight(String expr, int scale) {
@@ -65,22 +70,19 @@ public class WolphaCalculator {
         return indices;
     }
 
-    // 1+(1+1) have indices of open at (-1, 2) and close at (6, 7),
-    // with pseudo initial opening parenthesis at -1 and pseudo terminal parenthesis at 7 and this
-    // returns ((-1, true), (2, true), (6, false), (7, false))
-    private static Map<Integer, Boolean> parseIndices(List<Integer> openIndices, List<Integer> closeIndices, int finalIndex) {
+    // 1+(1+(1+1)) have indices of open at (2, 5) and close at (9, 10),
+    // returns ((2, true), (5, true), (9, false), (10, false))
+    private static Map<Integer, Boolean> parseIndices(List<Integer> openIndices, List<Integer> closeIndices) {
         Map<Integer, Boolean> map = new TreeMap<>();
         openIndices.forEach(index -> map.put(index, true));
         closeIndices.forEach(index -> map.put(index, false));
-        map.put(-1, true);
-        map.put(finalIndex, false);
+
         return map;
     }
 
 
-    // 1+(1+1) have parentheses of ((-1, true), (2, true), (6, false), (7, false)) and this returns
-    // ((0, 6), (3, 5)) representing 1+(1+1) and 1+1
-    // (3, 5) representing inner parenthesis will be on top of the stack for evaluation
+    // 1+(1+(1+1)) have parentheses of ((2, true), (5, true), (9, false), (10, false)) and this returns
+    // ((2, 10), (5, 9)) where (5, 9) represents inner parenthesis and will be on top of the stack for foremost evaluation
     private static Stack<List<Integer>> getListOfTermRanges(Map<Integer, Boolean> parenthesisIndices) {
         Stack<List<Integer>> finalTermRange = new Stack<>();
         Stack<List<Integer>> termRangeStack = new Stack<>();
