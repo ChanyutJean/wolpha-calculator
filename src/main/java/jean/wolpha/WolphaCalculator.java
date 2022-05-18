@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+// RIGHT NOW 1-1-1 = 1-(1-1) = 0 BUT SHOULD BE -1
 public class WolphaCalculator {
     private static final MathContext D = MathContext.DECIMAL128;
     private static final RoundingMode H = RoundingMode.HALF_EVEN;
@@ -33,24 +34,50 @@ public class WolphaCalculator {
     private static BigDecimal calculateByOrderOfOperations(String expr) {
         List<Integer> openIndices = getCharacterIndexes(expr, '(');
         List<Integer> closeIndices = getCharacterIndexes(expr, ')');
-        Map<Integer, Boolean> parenthesisIndices = parseIndices(openIndices, closeIndices);
-        Stack<List<Integer>> termRanges = getListOfTermRanges(parenthesisIndices);
+        List<Integer> range = findTopMostParenthesis(openIndices, closeIndices);
 
-        String newExpr = "";
-        while (!termRanges.isEmpty()) {
-            newExpr =
+        if (range == null) {
+            expr = insertOperationOrderNonParenthesis(expr);
+            return calculateLeftToRight(expr, F);
         }
-
-        return calculateLeftToRight(expr, F);
+        return calculateByOrderOfOperations(evaluateTopMostParenthesis(expr, range));
     }
 
-    private static String evaluateTopMostParenthesis(String expr, Stack<List<Integer>> termRanges) {
-        List<Integer> termRange = termRanges.pop();
-        String term = expr.substring(termRange.get(0), termRange.get(1));
+    private static String evaluateTopMostParenthesis(String expr, List<Integer> termRange) {
+        String term = expr.substring(termRange.get(0) + 1, termRange.get(1));
         String termWithOrderOfOperations = insertOperationOrderNonParenthesis(term);
-        return expr.substring(0, termRange.get(0))
+
+        // check if parenthesis is part of a function
+        String beforeParenthesis = expr.substring(0, termRange.get(0));
+        if (WolphaSymbol.FUNCTION_ENDERS.contains(beforeParenthesis.charAt(beforeParenthesis.length() - 1))) {
+
+            String funcName = functionPrefix(beforeParenthesis);
+            return expr.substring(0, termRange.get(0) - funcName.length())
+                    + calculateLeftToRight(funcName + "(" + term + ")", S)
+                    + expr.substring(termRange.get(1) + 1);
+        }
+        return expr.substring(0, termRange.get(0) + 1)
                 + calculateLeftToRight(termWithOrderOfOperations, S)
                 + expr.substring(termRange.get(1));
+    }
+
+    private static String functionPrefix(String beforeParenthesis) {
+        String lastThreeLetters = beforeParenthesis.substring(beforeParenthesis.length() - 3);
+
+        switch (lastThreeLetters) {
+            case "sin":
+                return "sin";
+            case "cos":
+                return "cos";
+            case "tan":
+                return "tan";
+            case "log":
+                return "log";
+            case "qrt":
+                return "sqrt";
+        }
+        // unreachable
+        throw new ArithmeticException(String.valueOf(beforeParenthesis.length()));
     }
 
     private static BigDecimal calculateLeftToRight(String expr, int scale) {
@@ -70,36 +97,29 @@ public class WolphaCalculator {
         return indices;
     }
 
-    // 1+(1+(1+1)) have indices of open at (2, 5) and close at (9, 10),
-    // returns ((2, true), (5, true), (9, false), (10, false))
-    private static Map<Integer, Boolean> parseIndices(List<Integer> openIndices, List<Integer> closeIndices) {
+    // 1+(1+(1+1)) have indices of open at (2, 5) and close at (9, 10)
+    // will be mapped to ((2, true), (5, true), (9, false), (10, false))
+    // and will return (5, 9)
+    private static List<Integer> findTopMostParenthesis(List<Integer> openIndices, List<Integer> closeIndices) {
         Map<Integer, Boolean> map = new TreeMap<>();
         openIndices.forEach(index -> map.put(index, true));
         closeIndices.forEach(index -> map.put(index, false));
 
-        return map;
-    }
-
-
-    // 1+(1+(1+1)) have parentheses of ((2, true), (5, true), (9, false), (10, false)) and this returns
-    // ((2, 10), (5, 9)) where (5, 9) represents inner parenthesis and will be on top of the stack for foremost evaluation
-    private static Stack<List<Integer>> getListOfTermRanges(Map<Integer, Boolean> parenthesisIndices) {
-        Stack<List<Integer>> finalTermRange = new Stack<>();
-        Stack<List<Integer>> termRangeStack = new Stack<>();
-
-        for (int entry : parenthesisIndices.keySet()) {
-            if (parenthesisIndices.get(entry)) { // opening parenthesis
-                List<Integer> termRange = new ArrayList<>();
-                termRange.add(entry + 1); // begin after opening parenthesis
-                termRangeStack.add(termRange);
-            } else { // closing parenthesis
-                List<Integer> termRange = termRangeStack.pop();
-                termRange.add(entry); // end at closing parenthesis
-                finalTermRange.add(termRange);
+        int openingParenthesisIndex = -1;
+        for (int key : map.keySet()) {
+            if (map.get(key)) {
+                openingParenthesisIndex = key;
+            } else {
+                if (openingParenthesisIndex != -1) {
+                    List<Integer> range = new ArrayList<>();
+                    range.add(openingParenthesisIndex);
+                    range.add(key);
+                    return range;
+                }
             }
         }
 
-        return finalTermRange;
+        return null;
     }
 
     // 1+1x1-1 becomes (1)+(1x1)-(1)
@@ -217,7 +237,7 @@ public class WolphaCalculator {
                 return BigDecimalMath.tan(operand, D);
             case "sqrt":
                 return BigDecimalMath.sqrt(operand, D);
-            case "ln":
+            case "log":
                 return BigDecimalMath.log(operand, D);
         }
         // unreachable

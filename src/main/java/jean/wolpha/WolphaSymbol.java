@@ -5,7 +5,7 @@ import java.util.List;
 public final class WolphaSymbol {
 
     public static final List<String> FUNCTIONS = List.of(
-            "sin", "cos", "tan", "sqrt", "ln"
+            "sin", "cos", "tan", "sqrt", "log"
     );
 
     public static final List<Character> VALID_CHAR = List.of(
@@ -25,6 +25,10 @@ public final class WolphaSymbol {
 
     public static final List<Character> CONSTANT_STARTERS = List.of(
             'e', 'p'
+    );
+
+    public static final List<Character> FUNCTION_ENDERS = List.of(
+            'n', 's', 't', 'g'
     );
 
     public static final List<Character> OPERATORS = List.of(

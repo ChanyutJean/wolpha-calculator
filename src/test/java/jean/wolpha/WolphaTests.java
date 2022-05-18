@@ -101,11 +101,11 @@ public class WolphaTests {
     }
 
     @Test
-    public void ln() {
-        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("ln(e)"));
-        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("ln(e^ln(e^10))"));
+    public void log() {
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("log(e)"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("log(e^log(e^10))"));
         assertEquals(round(BigDecimalMath.log(BigDecimalMath.pi(D), D)),
-                WolphaCalculator.calculate("ln(pi)"));
+                WolphaCalculator.calculate("log(pi)"));
     }
 
     @Test
