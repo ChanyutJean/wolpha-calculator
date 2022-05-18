@@ -126,6 +126,6 @@ public class WolphaTests {
     public void tan() {
         assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("tan(pi/4)"));
         assertEquals(round(BigDecimal.ZERO), WolphaCalculator.calculate("tan(2*pi)"));
-        assertEquals(round(BigDecimalMath.sqrt(BigDecimal.valueOf(3), D)), WolphaCalculator.calculate("tan(pi/6)"));
+        assertEquals(round(BigDecimalMath.sqrt(BigDecimal.valueOf(3), D)), WolphaCalculator.calculate("tan(pi/3)"));
     }
 }

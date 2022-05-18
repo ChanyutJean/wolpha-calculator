@@ -37,6 +37,41 @@ public class WolphaCalculator {
         return calc.readValue().setScale(scale, H);
     }
 
+    private static String insertOperationOrder(String expr) {
+
+    }
+
+    private static String insertOperationOrderNonParenthesis(String expr) {
+//        List<Character> operators = extractOperators(expr);
+        expr = expr.replaceAll("\\+", ")+(");
+        expr = expr.replaceAll("-", ")-(");
+        return "(" + expr + ")";
+    }
+
+//    private static List<Character> extractOperators(String expr) {
+//        return Arrays.stream(expr.split(""))
+//                .map(character -> character.charAt(0))
+//                .filter(WolphaSymbol.OPERATORS::contains)
+//                .collect(Collectors.toList());
+//    }
+//
+//    private static int nextOperatorIndex(CharacterIterator itr) {
+//
+//    }
+//
+//
+//    private static DefaultMutableTreeNode createOperationTree(String expr) {
+//        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+//        CharacterIterator itr = new StringCharacterIterator(expr);
+//
+//        while (itr.getIndex() >= itr.getEndIndex()) {
+//            StringBuilder term = new StringBuilder();
+//            if (WolphaSymbol.OPERATORS.contains(itr.current())) {
+//
+//            }
+//        }
+//    }
+
     private BigDecimal readValue() {
         if (WolphaSymbol.DIGITS.contains(itr.current())
                 || WolphaSymbol.DECIMAL_POINT.contains(itr.current())) {
@@ -78,11 +113,6 @@ public class WolphaCalculator {
             throw new ArithmeticException(String.valueOf(itr.getIndex()));
         }
     }
-
-//    private static String bundleCharacters(CharacterIterator itr) {
-//        String result = "";
-//        while (itr.current() != null)
-//    }
 
     private BigDecimal parseExpectingOperator(BigDecimal value) {
         if (WolphaSymbol.EQUALS.contains(itr.current())
@@ -139,10 +169,6 @@ public class WolphaCalculator {
         // unreachable
         throw new ArithmeticException(String.valueOf(itr.getIndex()));
     }
-
-//    private static BigDecimal pow(BigDecimal base, BigDecimal index) {
-//        BigDecimal power = index.multiply(BigDecimalMath.log(base, ));
-//    }
 
     private BigDecimal applyFunction(String funcName, BigDecimal operand) {
         switch (funcName) {
