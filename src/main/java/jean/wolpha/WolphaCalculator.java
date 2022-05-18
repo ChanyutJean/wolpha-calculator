@@ -24,46 +24,45 @@ public class WolphaCalculator {
         this.itr = itr;
     }
 
-    public BigDecimal calculate() {
-        return BigDecimal.ZERO;
+    public static BigDecimal calculate(String expr) {
+        CharacterIterator itr = new StringCharacterIterator(expr);
+        WolphaCalculator calc = new WolphaCalculator(itr);
+        return calc.readValue();
     }
 
-    private BigDecimal readValue() throws Exception {
+    private BigDecimal readValue() {
         if (WolphaSymbol.DIGITS.contains(itr.current())
                 || WolphaSymbol.DECIMAL_POINT.contains(itr.current())) {
-            return applyOperator(readNumber(), readOperator(), readValue());
+            BigDecimal number = readNumber();
+
+            if (WolphaSymbol.EQUALS.contains(itr.current())) {
+                return number;
+            } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
+                return applyOperator(readNumber(), readOperator(), readValue());
+            } else {
+                throw new ArithmeticException(String.valueOf(itr.getIndex()));
+            }
 
         } else if (WolphaSymbol.CONSTANT_STARTERS.contains(itr.current())) {
-            return applyOperator(readConstant(), readOperator(), readValue());
+            BigDecimal constant = readConstant();
+
+            if (WolphaSymbol.EQUALS.contains(itr.current())) {
+                return constant;
+            } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
+                return applyOperator(readConstant(), readOperator(), readValue());
+            } else {
+                throw new ArithmeticException(String.valueOf(itr.getIndex()));
+            }
 
         } else if (WolphaSymbol.FUNCTION_STARTERS.contains(itr.current())) {
             String funcName = readFunction();
-            throw new ArithmeticException(String.valueOf(itr.getIndex()));
-//            if (!WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
-//                throw new ArithmeticException(String.valueOf(itr.getIndex()));
-//            }
-//            parenthesisStack += 1;
-//
-//            BigDecimal operand;
-//            try {
-//                operand = readValue();
-//            } catch (WolphaParenthesisException e) {
-//                itr.next();
-//            }
-//
-//
-//
-//            BigDecimal operand;
-//            if (WolphaSymbol.DIGITS.contains(itr.current())
-//                    || WolphaSymbol.DECIMAL_POINT.contains(itr.current())) {
-//                operand = readNumber();
-//            } else if (WolphaSymbol.CONSTANT_STARTERS.contains(itr.current())) {
-//                operand = readConstant();
-//            } else {
-//                throw new ArithmeticException(String.valueOf(itr.getIndex()));
-//            }
-//
-//            return
+
+            if (!WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
+                throw new ArithmeticException(String.valueOf(itr.getIndex()));
+            }
+            parenthesisStack += 1;
+
+            return applyFunction(funcName, readValue());
 
         }  else if (WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
             parenthesisStack += 1;
@@ -71,7 +70,7 @@ public class WolphaCalculator {
 
         } else if (WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
             if (parenthesisStack == 0) {
-                throw new WolphaParenthesisException(String.valueOf(itr.getIndex()));
+                throw new ArithmeticException(String.valueOf(itr.getIndex()));
             }
             parenthesisStack -= 1;
             return readValue();

@@ -12,9 +12,7 @@ public class WolphaService {
     private WolphaRepository repo;
 
     public String process(String expr) {
-        CharacterIterator itr = new StringCharacterIterator(expr);
-        WolphaCalculator calc = new WolphaCalculator(itr);
-        String result = calc.calculate().toPlainString();
+        String result = WolphaCalculator.calculate(expr).toPlainString();
         repo.addEntity(expr, result, new java.sql.Timestamp(System.currentTimeMillis()));
         return result;
     }
