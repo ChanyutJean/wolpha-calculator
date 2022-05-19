@@ -103,9 +103,9 @@ public class WolphaTests {
     @Test
     public void log() {
         assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("log(e)"));
-        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("log(e^log(e^10))"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("log(e^ln(e^10))"));
         assertEquals(round(BigDecimalMath.log(BigDecimalMath.pi(D), D)),
-                WolphaCalculator.calculate("log(pi)"));
+                WolphaCalculator.calculate("ln(pi)"));
     }
 
     @Test
@@ -128,4 +128,45 @@ public class WolphaTests {
         assertEquals(round(BigDecimal.ZERO), WolphaCalculator.calculate("tan(2*pi)"));
         assertEquals(round(BigDecimalMath.sqrt(BigDecimal.valueOf(3), D)), WolphaCalculator.calculate("tan(pi/3)"));
     }
+    
+    @Test
+    public void minus() {
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("5-(-5)"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("(-2)*(-5)"));
+        assertEquals(round(BigDecimal.ZERO), WolphaCalculator.calculate("cos(-pi/2)"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("-1*-10"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("--1"));
+    }
+
+    @Test
+    public void ultimateTest() {
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("1+9"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("11-1"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("1*10"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("10x1"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("20/2"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("10^1"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("e/e"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("pi/pi"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("sin(5*pi/2)"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("cos(0)"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("tan(9*pi/4)"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("log(e)"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("ln(e)"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("sqrt(100)"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("((10))"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("((2.0)*(5.0))"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("(log(e)*ln(e))"));
+        assertEquals(round(BigDecimal.valueOf(6561)), WolphaCalculator.calculate("3^2^3"));
+        assertEquals(round(BigDecimal.valueOf(6561)), WolphaCalculator.calculate("3^(2^3)"));
+        assertEquals(round(BigDecimal.valueOf(729)), WolphaCalculator.calculate("(3^2)^3"));
+        assertEquals(round(BigDecimal.valueOf(8)), WolphaCalculator.calculate("2*2^2"));
+        assertEquals(round(BigDecimal.valueOf(8)), WolphaCalculator.calculate("2^2*2"));
+        assertEquals(round(BigDecimal.valueOf(420.69)), WolphaCalculator.calculate("420.69"));
+        assertEquals(round(BigDecimal.valueOf(11111)), WolphaCalculator.calculate("11111"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("2+2*2^2"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("15-1*1-1/1-1^1-2"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("2*(2-2)^2+10"));
+    }
+
 }

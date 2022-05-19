@@ -31,6 +31,8 @@ public class WolphaCalculator {
     }
 
     private static BigDecimal calculateByOrderOfOperations(String expr) {
+        expr = expr.replaceAll("ln", "log");
+
         List<Integer> openIndices = getCharacterIndexes(expr, '(');
         List<Integer> closeIndices = getCharacterIndexes(expr, ')');
         List<Integer> range = findTopMostParenthesis(openIndices, closeIndices);
@@ -207,11 +209,11 @@ public class WolphaCalculator {
 
         } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
 
-            WolphaCalculator powerCalculator = new WolphaCalculator(itr);
+            WolphaCalculator powerCalculator = new WolphaCalculator((CharacterIterator) itr.clone());
             char operator = powerCalculator.readOperator();
 
             if (operator == '^') {
-                BigDecimal nextValue = powerCalculator.readValue(true);
+                powerCalculator.readValue(true);
 
                 if (WolphaSymbol.EQUALS.contains(itr.current())
                         || WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
@@ -220,7 +222,13 @@ public class WolphaCalculator {
 
                 } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
 
-                    char nextOperator = powerCalculator.readOperator();
+                    char nextOperator;
+
+                    try {
+                        nextOperator = powerCalculator.readOperator();
+                    } catch (ArithmeticException e) {
+                        return applyOperator(value, readOperator(), readValue(true));
+                    }
 
                     if (nextOperator == '^') {
                         return applyOperator(value, readOperator(), parseExpectingOperator(readValue(true)));
@@ -233,34 +241,6 @@ public class WolphaCalculator {
 
             BigDecimal result = applyOperator(value, readOperator(), readValue(true));
             return parseExpectingOperator(result);
-//
-//
-//
-//            BigDecimal nextValue = readValue(true);
-//
-//            if (WolphaSymbol.EQUALS.contains(itr.current())
-//                    || WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
-//
-//                return applyOperator(value, operator, nextValue);
-//
-//            } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
-//
-//                char nextOperator = readOperator();
-//                BigDecimal secondNextValue = readValue(true);
-//
-//            }
-////
-////
-////            char operator = readOperator();
-////
-////
-////
-////            if (operator == '^') {
-////                BigDecimal result = applyOperator(value, readOperator(), readValue(false));
-////                return parseExpectingOperator(result);
-////            }
-////            BigDecimal result = applyOperator(value, readOperator(), readValue(true));
-////            return parseExpectingOperator(result);
 
         } else {
             throw new ArithmeticException(String.valueOf(itr.getIndex()));
