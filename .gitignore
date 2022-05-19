@@ -1,5 +1,6 @@
 # IntelliJ
 .idea/
+.run/
 
 # Target
 target/
