@@ -46,4 +46,6 @@ public final class WolphaSymbol {
     public static final List<Character> DECIMAL_POINT = List.of('.');
 
     public static final List<Character> EQUALS = List.of('=');
+
+    public static final List<Character> NEGATIVE = List.of('-');
 }

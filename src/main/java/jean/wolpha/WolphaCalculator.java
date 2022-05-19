@@ -133,8 +133,9 @@ public class WolphaCalculator {
     // and finally ((1))+((1)x(1^1^1))-((1))
     // 1^1^1 will be evaluated right to left in the implementation
     private static String insertOperationOrderNonParenthesis(String expr) {
+        expr = expr.replaceAll("--", "+");
         expr = expr.replaceAll("\\+", ")+(");
-        expr = expr.replaceAll("-", ")-(");
+        expr = replaceSubtraction(expr);
         expr = "(" + expr + ")";
         expr = expr.replaceAll("\\(\\)", "(0)");
         expr = expr.replaceAll("\\(", "((");
@@ -142,6 +143,20 @@ public class WolphaCalculator {
         expr = expr.replaceAll("\\*", ")*(");
         expr = expr.replaceAll("x", ")x(");
         expr = expr.replaceAll("/", ")/(");
+        return expr;
+    }
+
+    private static String replaceSubtraction(String expr) {
+        for (int i = 0; i < expr.length(); i++) {
+            if (WolphaSymbol.NEGATIVE.contains(expr.charAt(i))) {
+                if (i == 0) {
+                    continue;
+                }
+                if (WolphaSymbol.DIGITS.contains(expr.charAt(i-1))) {
+                    expr = expr.substring(0, i) + ")-(" + expr.substring(i + 1);
+                }
+            }
+        }
         return expr;
     }
 
@@ -186,6 +201,14 @@ public class WolphaCalculator {
                 return value;
             }
             return parseExpectingOperator(value);
+
+        } else if (WolphaSymbol.NEGATIVE.contains(itr.current())) {
+
+            itr.next();
+
+            BigDecimal operand = readValue(true);
+
+            return parseExpectingOperator(operand.multiply(BigDecimal.valueOf(-1)));
 
         } else if (WolphaSymbol.OPERATORS.contains(itr.current())
                 || WolphaSymbol.NON_STARTER_CHARACTERS.contains(itr.current())

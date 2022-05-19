@@ -131,11 +131,14 @@ public class WolphaTests {
     
     @Test
     public void minus() {
+        assertEquals(round(BigDecimal.valueOf(-1)), WolphaCalculator.calculate("-1"));
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("5-(-5)"));
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("(-2)*(-5)"));
         assertEquals(round(BigDecimal.ZERO), WolphaCalculator.calculate("cos(-pi/2)"));
-        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("-1*-10"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("-1*-10"));
         assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("--1"));
+        assertEquals(round(BigDecimal.ZERO), WolphaCalculator.calculate("5---5"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("0--(-(-10))"));
     }
 
     @Test
@@ -157,6 +160,7 @@ public class WolphaTests {
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("((10))"));
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("((2.0)*(5.0))"));
         assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("(log(e)*ln(e))"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("(ln(e*ln(e))"));
         assertEquals(round(BigDecimal.valueOf(6561)), WolphaCalculator.calculate("3^2^3"));
         assertEquals(round(BigDecimal.valueOf(6561)), WolphaCalculator.calculate("3^(2^3)"));
         assertEquals(round(BigDecimal.valueOf(729)), WolphaCalculator.calculate("(3^2)^3"));
@@ -167,6 +171,8 @@ public class WolphaTests {
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("2+2*2^2"));
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("15-1*1-1/1-1^1-2"));
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("2*(2-2)^2+10"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("--5--5"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("-sin(-pi/2)"));
     }
 
 }
