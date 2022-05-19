@@ -10,7 +10,7 @@ import java.math.RoundingMode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 public class WolphaTests {
     private static final MathContext D = MathContext.DECIMAL128;
-    private static final RoundingMode H = RoundingMode.HALF_EVEN;
+    private static final RoundingMode H = RoundingMode.HALF_UP;
     private static final int F = 10;
 
 

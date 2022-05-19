@@ -15,10 +15,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-// RIGHT NOW 1-1-1 = 1-(1-1) = 0 BUT SHOULD BE -1
 public class WolphaCalculator {
     private static final MathContext D = MathContext.DECIMAL128;
-    private static final RoundingMode H = RoundingMode.HALF_EVEN;
+    private static final RoundingMode H = RoundingMode.HALF_UP;
     private static final int S = 20; // Intermediate precision
     private static final int F = 10; // Final precision
     private final CharacterIterator itr;
@@ -49,16 +48,21 @@ public class WolphaCalculator {
 
         // check if parenthesis is part of a function
         String beforeParenthesis = expr.substring(0, termRange.get(0));
+        if (beforeParenthesis.equals("")) {
+            return calculateLeftToRight(termWithOrderOfOperations, S).toPlainString()
+                    + expr.substring(termRange.get(1) + 1);
+        }
+
         if (WolphaSymbol.FUNCTION_ENDERS.contains(beforeParenthesis.charAt(beforeParenthesis.length() - 1))) {
 
             String funcName = functionPrefix(beforeParenthesis);
             return expr.substring(0, termRange.get(0) - funcName.length())
-                    + calculateLeftToRight(funcName + "(" + term + ")", S)
+                    + calculateLeftToRight(funcName + "(" + term + ")", S).toPlainString()
                     + expr.substring(termRange.get(1) + 1);
         }
-        return expr.substring(0, termRange.get(0) + 1)
-                + calculateLeftToRight(termWithOrderOfOperations, S)
-                + expr.substring(termRange.get(1));
+        return expr.substring(0, termRange.get(0))
+                + calculateLeftToRight(termWithOrderOfOperations, S).toPlainString()
+                + expr.substring(termRange.get(1) + 1);
     }
 
     private static String functionPrefix(String beforeParenthesis) {
@@ -84,7 +88,7 @@ public class WolphaCalculator {
         expr += "=";
         CharacterIterator itr = new StringCharacterIterator(expr);
         WolphaCalculator calc = new WolphaCalculator(itr);
-        return calc.readValue().setScale(scale, H);
+        return calc.readValue(false).setScale(scale, H);
     }
 
     private static List<Integer> getCharacterIndexes(String expr, char character) {
@@ -122,23 +126,39 @@ public class WolphaCalculator {
         return null;
     }
 
-    // 1+1x1-1 becomes (1)+(1x1)-(1)
+    // 1+1x1^1^1-1 becomes (1)+(1x1^1^1)-(1)
+    // then becomes ((1))+((1x1^1^1))-((1))
+    // and finally ((1))+((1)x(1^1^1))-((1))
+    // 1^1^1 will be evaluated right to left in the implementation
     private static String insertOperationOrderNonParenthesis(String expr) {
         expr = expr.replaceAll("\\+", ")+(");
         expr = expr.replaceAll("-", ")-(");
-        return "(" + expr + ")";
+        expr = "(" + expr + ")";
+        expr = expr.replaceAll("\\(\\)", "(0)");
+        expr = expr.replaceAll("\\(", "((");
+        expr = expr.replaceAll("\\)", "))");
+        expr = expr.replaceAll("\\*", ")*(");
+        expr = expr.replaceAll("x", ")x(");
+        expr = expr.replaceAll("/", ")/(");
+        return expr;
     }
 
-    private BigDecimal readValue() {
+    private BigDecimal readValue(boolean returnImmediately) {
         if (WolphaSymbol.DIGITS.contains(itr.current())
                 || WolphaSymbol.DECIMAL_POINT.contains(itr.current())) {
 
             BigDecimal number = readNumber();
+            if (returnImmediately) {
+                return number;
+            }
             return parseExpectingOperator(number);
 
         } else if (WolphaSymbol.CONSTANT_STARTERS.contains(itr.current())) {
 
             BigDecimal constant = readConstant();
+            if (returnImmediately) {
+                return constant;
+            }
             return parseExpectingOperator(constant);
 
         } else if (WolphaSymbol.FUNCTION_STARTERS.contains(itr.current())) {
@@ -148,6 +168,10 @@ public class WolphaCalculator {
             BigDecimal operand = readParenthesisValue();
 
             BigDecimal functionResult = applyFunction(funcName, operand);
+
+            if (returnImmediately) {
+                return functionResult;
+            }
             return parseExpectingOperator(functionResult);
 
         }  else if (WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
@@ -155,6 +179,10 @@ public class WolphaCalculator {
             itr.next();
 
             BigDecimal value = readParenthesisValue();
+
+            if (returnImmediately) {
+                return value;
+            }
             return parseExpectingOperator(value);
 
         } else if (WolphaSymbol.OPERATORS.contains(itr.current())
@@ -174,9 +202,66 @@ public class WolphaCalculator {
     private BigDecimal parseExpectingOperator(BigDecimal value) {
         if (WolphaSymbol.EQUALS.contains(itr.current())
                 || WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
+
             return value;
+
         } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
-            return applyOperator(value, readOperator(), readValue());
+
+            WolphaCalculator powerCalculator = new WolphaCalculator(itr);
+            char operator = powerCalculator.readOperator();
+
+            if (operator == '^') {
+                BigDecimal nextValue = powerCalculator.readValue(true);
+
+                if (WolphaSymbol.EQUALS.contains(itr.current())
+                        || WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
+
+                    return applyOperator(value, readOperator(), readValue(true));
+
+                } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
+
+                    char nextOperator = powerCalculator.readOperator();
+
+                    if (nextOperator == '^') {
+                        return applyOperator(value, readOperator(), parseExpectingOperator(readValue(true)));
+                    }
+
+                    return parseExpectingOperator(applyOperator(value, readOperator(), readValue(true)));
+                }
+
+            }
+
+            BigDecimal result = applyOperator(value, readOperator(), readValue(true));
+            return parseExpectingOperator(result);
+//
+//
+//
+//            BigDecimal nextValue = readValue(true);
+//
+//            if (WolphaSymbol.EQUALS.contains(itr.current())
+//                    || WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
+//
+//                return applyOperator(value, operator, nextValue);
+//
+//            } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
+//
+//                char nextOperator = readOperator();
+//                BigDecimal secondNextValue = readValue(true);
+//
+//            }
+////
+////
+////            char operator = readOperator();
+////
+////
+////
+////            if (operator == '^') {
+////                BigDecimal result = applyOperator(value, readOperator(), readValue(false));
+////                return parseExpectingOperator(result);
+////            }
+////            BigDecimal result = applyOperator(value, readOperator(), readValue(true));
+////            return parseExpectingOperator(result);
+
         } else {
             throw new ArithmeticException(String.valueOf(itr.getIndex()));
         }
@@ -191,12 +276,12 @@ public class WolphaCalculator {
 
                 itr.next();
                 BigDecimal operand = readParenthesisValue();
-                parenthesisValue.append(applyFunction(funcName, operand));
+                parenthesisValue.append(applyFunction(funcName, operand).toPlainString());
 
             } else if (WolphaSymbol.OPEN_PARENTHESIS.contains(itr.current())) {
 
                 itr.next();
-                parenthesisValue.append(readParenthesisValue());
+                parenthesisValue.append(readParenthesisValue().toPlainString());
 
             } else {
 
