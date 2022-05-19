@@ -8,10 +8,11 @@ import java.sql.Timestamp;
 
 @Repository
 public interface WolphaRepository extends JpaRepository<WolphaEntity, Integer> {
-    default void addEntity(String record, String result, Timestamp at) {
+    default void addEntity(String record, String result, int error, Timestamp at) {
         WolphaEntity ent = new WolphaEntity();
         ent.setRecord(record);
         ent.setResult(result);
+        ent.setError(error);
         ent.setAt(at);
         this.save(ent);
     }

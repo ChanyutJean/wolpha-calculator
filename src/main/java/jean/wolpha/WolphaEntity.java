@@ -4,7 +4,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 
 @Entity
@@ -14,11 +13,12 @@ import java.sql.Timestamp;
 public class WolphaEntity {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
-    private Integer id;
-    @NotNull
+    private int id;
+    @Column(nullable = false)
     private Timestamp at;
-    @NotNull
+    @Column(nullable = false)
     private String record;
-    @NotNull
+    @Column(nullable = false)
     private String result;
+    private int error;
 }

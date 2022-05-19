@@ -8,6 +8,8 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 public class WolphaTests {
     private static final MathContext D = MathContext.DECIMAL128;
     private static final RoundingMode H = RoundingMode.HALF_UP;
@@ -142,6 +144,17 @@ public class WolphaTests {
     }
 
     @Test
+    public void fails() {
+        assertThrows(ArithmeticException.class, () -> WolphaCalculator.calculate("("));
+        assertThrows(ArithmeticException.class, () -> WolphaCalculator.calculate("pp"));
+        assertThrows(ArithmeticException.class, () -> WolphaCalculator.calculate("a"));
+        assertThrows(ArithmeticException.class, () -> WolphaCalculator.calculate("lon"));
+        assertThrows(ArithmeticException.class, () -> WolphaCalculator.calculate("3+*"));
+        assertThrows(ArithmeticException.class, () -> WolphaCalculator.calculate("3k"));
+        assertThrows(ArithmeticException.class, () -> WolphaCalculator.calculate("!"));
+    }
+
+    @Test
     public void ultimateTest() {
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("1+9"));
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("11-1"));
@@ -160,7 +173,8 @@ public class WolphaTests {
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("((10))"));
         assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("((2.0)*(5.0))"));
         assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("(log(e)*ln(e))"));
-        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("(ln(e*ln(e))"));
+        assertEquals(round(BigDecimal.ONE), WolphaCalculator.calculate("(ln(e*ln(e)))"));
+        assertEquals(round(BigDecimal.TEN), WolphaCalculator.calculate("1^2*10"));
         assertEquals(round(BigDecimal.valueOf(6561)), WolphaCalculator.calculate("3^2^3"));
         assertEquals(round(BigDecimal.valueOf(6561)), WolphaCalculator.calculate("3^(2^3)"));
         assertEquals(round(BigDecimal.valueOf(729)), WolphaCalculator.calculate("(3^2)^3"));

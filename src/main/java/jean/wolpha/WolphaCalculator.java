@@ -238,28 +238,19 @@ public class WolphaCalculator {
             if (operator == '^') {
                 powerCalculator.readValue(true);
 
-                if (WolphaSymbol.EQUALS.contains(itr.current())
-                        || WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
+                char nextOperator;
 
+                try {
+                    nextOperator = powerCalculator.readOperator();
+                } catch (ArithmeticException e) {
                     return applyOperator(value, readOperator(), readValue(true));
-
-                } else if (WolphaSymbol.OPERATORS.contains(itr.current())) {
-
-                    char nextOperator;
-
-                    try {
-                        nextOperator = powerCalculator.readOperator();
-                    } catch (ArithmeticException e) {
-                        return applyOperator(value, readOperator(), readValue(true));
-                    }
-
-                    if (nextOperator == '^') {
-                        return applyOperator(value, readOperator(), parseExpectingOperator(readValue(true)));
-                    }
-
-                    return parseExpectingOperator(applyOperator(value, readOperator(), readValue(true)));
                 }
 
+                if (nextOperator == '^') {
+                    return applyOperator(value, readOperator(), parseExpectingOperator(readValue(true)));
+                }
+
+                return parseExpectingOperator(applyOperator(value, readOperator(), readValue(true)));
             }
 
             BigDecimal result = applyOperator(value, readOperator(), readValue(true));
@@ -273,7 +264,11 @@ public class WolphaCalculator {
     private BigDecimal readParenthesisValue() {
         StringBuilder parenthesisValue = new StringBuilder();
         while (!WolphaSymbol.CLOSE_PARENTHESIS.contains(itr.current())) {
-            if (WolphaSymbol.FUNCTION_STARTERS.contains(itr.current())) {
+            if (WolphaSymbol.EQUALS.contains(itr.current())) {
+
+                throw new ArithmeticException(String.valueOf(itr.getIndex()));
+
+            } else if (WolphaSymbol.FUNCTION_STARTERS.contains(itr.current())) {
 
                 String funcName = readFunction();
 
@@ -411,6 +406,7 @@ public class WolphaCalculator {
                 throw new ArithmeticException(String.valueOf(itr.getIndex()));
             }
         }
+        // unreachable
         throw new ArithmeticException(String.valueOf(itr.getIndex()));
     }
 
