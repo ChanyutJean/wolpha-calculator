@@ -14,6 +14,7 @@ public class WolphaService {
             result = String.valueOf(WolphaCalculator.calculate(expr).doubleValue());
         } catch (ArithmeticException e) {
             repo.addEntity(expr, "", Integer.parseInt(e.getMessage()), new java.sql.Timestamp(System.currentTimeMillis()));
+            return "";
         }
         repo.addEntity(expr, result, -1, new java.sql.Timestamp(System.currentTimeMillis()));
         return result;
