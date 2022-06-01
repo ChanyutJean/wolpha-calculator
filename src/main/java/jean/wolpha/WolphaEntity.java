@@ -7,7 +7,7 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "entity", schema = "wolpha")
+@Table(name = "entity")
 @Setter
 @NoArgsConstructor
 public class WolphaEntity {
