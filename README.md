@@ -1,9 +1,9 @@
 # wolpha-calculator
  A simple Wolfram Alpha alternative
 
-## Usage
+ (Trigger warning: Jank implementation)
 
-This repository is available at https://wolpha-calculator.herokuapp.com/.
+## Usage
 
 To use it, submit POST requests to the endpoint with the body as an expression you want to calculate.
 
